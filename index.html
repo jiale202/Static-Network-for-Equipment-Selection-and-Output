@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>设备选购系统（内部使用）</title>
+<style>
+:root{
+  --primary:#15559e; --primary-d:#0f4178; --primary-l:#e8f0fa;
+  --accent:#c8963e; --bg:#f2f5f9; --card:#ffffff;
+  --txt:#22303f; --sub:#68788c; --line:#dfe6ee; --ok:#1e9e6a; --warn:#c0392b;
+  --radius:12px; --shadow:0 1px 4px rgba(20,50,80,.08),0 4px 16px rgba(20,50,80,.06);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:"Microsoft YaHei","PingFang SC","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:15px;line-height:1.6}
+button{font-family:inherit}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#fff;outline:none;max-width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(21,85,158,.12)}
+textarea{width:100%;min-height:90px;resize:vertical}
+label{display:block}
+/* ===== 布局 ===== */
+.topbar{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;box-shadow:var(--shadow)}
+.topbar-inner{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:10px 16px}
+.logo{font-size:17px;font-weight:700;letter-spacing:.5px;white-space:nowrap}
+.logo small{display:block;font-weight:400;font-size:11px;opacity:.75;letter-spacing:2px}
+.tabs{display:flex;gap:4px;margin-left:auto}
+.tabs button{border:0;background:transparent;color:#dce8f5;padding:8px 14px;border-radius:9px;cursor:pointer;font-size:14.5px;position:relative}
+.tabs button.active{background:rgba(255,255,255,.18);color:#fff;font-weight:600}
+.tabs button .badge{position:absolute;top:2px;right:4px;background:var(--accent);color:#fff;font-size:10.5px;min-width:16px;height:16px;line-height:16px;text-align:center;border-radius:8px;padding:0 3px}
+main{max-width:1080px;margin:0 auto;padding:16px 16px 96px}
+.page{display:none}
+.page.active{display:block}
+.page-title{font-size:19px;font-weight:700;margin:6px 0 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.page-title .cnt{font-size:12px;color:var(--sub);font-weight:400;background:#fff;border:1px solid var(--line);padding:2px 10px;border-radius:20px}
+/* ===== 组件 ===== */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:9px;padding:9px 18px;font-size:14.5px;cursor:pointer;background:var(--primary);color:#fff;transition:filter .15s}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:#fff;color:var(--primary);border:1px solid var(--primary)}
+.btn.gray{background:#fff;color:var(--sub);border:1px solid var(--line)}
+.btn.warn{background:#fff;color:var(--warn);border:1px solid #e6c9c5}
+.btn.small{padding:5px 10px;font-size:12.5px;border-radius:7px}
+.btn.block{width:100%}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.chip{border:1px solid var(--line);background:#fff;color:var(--sub);border-radius:20px;padding:4px 14px;font-size:13px;cursor:pointer;white-space:nowrap}
+.chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.searchbar{position:relative}
+.searchbar input{width:100%;padding:10px 14px 10px 36px;border-radius:24px;font-size:14.5px}
+.searchbar:before{content:"🔍";position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.55}
+.price{color:var(--primary-d);font-weight:700}
+.price.pending{color:var(--accent);font-weight:600;font-size:13px}
+/* 产品卡 */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:14px}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 14px 12px;display:flex;flex-direction:column;transition:transform .15s}
+.pcard:hover{transform:translateY(-2px)}
+.pcard .p-name{font-weight:700;font-size:15px;margin-bottom:4px}
+.pcard .p-cat{display:inline-block;font-size:11px;color:var(--primary);background:var(--primary-l);padding:1px 8px;border-radius:10px;margin-bottom:6px}
+.pcard .p-mp{font-size:12px;color:var(--sub);flex:1}
+.pcard .p-foot{display:flex;align-items:baseline;justify-content:space-between;margin-top:10px;gap:8px}
+.pcard .p-opts{font-size:11.5px;color:var(--sub);margin-top:3px}
+/* 表格 */
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px;background:#fff}
+.tbl th{background:var(--primary);color:#fff;font-weight:600;padding:8px 9px;text-align:center;white-space:nowrap;border:1px solid var(--primary-d)}
+.tbl td{border:1px solid var(--line);padding:7px 9px;vertical-align:middle}
+.tbl tr:nth-child(even) td{background:#f7fafd}
+.tbl .num{text-align:center;white-space:nowrap}
+.tbl input{width:64px;padding:4px 6px;text-align:center}
+.tbl input.wide{width:110px;text-align:right}
+.tbl .mini{font-size:12px;color:var(--sub)}
+/* 移动端清单卡片 */
+.mitem{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:10px}
+.mitem .m-name{font-weight:700;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.mitem .m-sub{font-size:12px;color:var(--sub);margin:3px 0}
+.mitem .m-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.mitem .m-ctrl{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.flowstrip{display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:13px;background:var(--primary-l);border:1px dashed #b9cfec;border-radius:10px;padding:9px 12px;margin:10px 0 4px}
+.flowstrip .fs-item{background:#fff;border:1px solid #b9cfec;border-radius:8px;padding:2px 10px;color:var(--primary-d);font-size:12.5px}
+.flowstrip .fs-arrow{color:var(--primary);font-weight:700}
+/* 弹窗 */
+.modal-mask{position:fixed;inset:0;background:rgba(15,35,60,.45);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.modal-mask.show{display:flex}
+.modal{background:#fff;width:100%;max-width:760px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;box-shadow:0 -8px 40px rgba(0,0,0,.25)}
+@media(min-width:768px){
+  .modal-mask{align-items:center}
+  .modal{border-radius:16px;max-height:88vh}
+}
+.modal-head{position:sticky;top:0;background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;z-index:2}
+.modal-head h3{margin:0;font-size:16.5px}
+.modal-head .x{background:transparent;border:0;color:#fff;font-size:20px;cursor:pointer;line-height:1;padding:4px 8px}
+.modal-body{padding:16px 18px 22px}
+/* 选配 */
+.optrow{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:8px;background:#fbfdff}
+.optrow.on{border-color:var(--primary);background:var(--primary-l)}
+.optrow input[type=checkbox]{width:17px;height:17px;margin-top:3px;flex:none}
+.optrow .o-name{font-weight:600;font-size:14px}
+.optrow .o-desc{font-size:12px;color:var(--sub)}
+.qtybox{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}
+.qtybox button{border:0;background:#f0f4f9;width:34px;height:34px;font-size:17px;cursor:pointer;color:var(--primary)}
+.qtybox span{min-width:44px;text-align:center;font-size:15px;font-weight:600}
+/* toast */
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast-item{background:rgba(20,40,70,.92);color:#fff;padding:9px 20px;border-radius:24px;font-size:13.5px;box-shadow:0 4px 14px rgba(0,0,0,.25);animation:fadein .2s}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+/* 底部导航（移动端） */
+.bottomnav{position:fixed;bottom:0;left:0;right:0;z-index:60;background:#fff;border-top:1px solid var(--line);display:none;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom)}
+.bottomnav button{flex:1;border:0;background:transparent;color:var(--sub);font-size:11.5px;padding:7px 0 6px;cursor:pointer;position:relative}
+.bottomnav button .ic{display:block;font-size:20px;line-height:1.3}
+.bottomnav button.active{color:var(--primary);font-weight:600}
+.bottomnav button .badge{position:absolute;top:2px;right:calc(50% - 24px);background:var(--accent);color:#fff;font-size:10px;min-width:15px;height:15px;line-height:15px;text-align:center;border-radius:8px}
+@media(max-width:767px){
+  .topbar .tabs{display:none}
+  .bottomnav{display:flex}
+  main{padding-bottom:86px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:9px}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+/* 维护 */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 14px;margin:10px 0}
+.prodrow{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#fbfdff}
+.prodrow .pr-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.arrrow{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.arrrow input[type=text]{flex:1}
+.arrrow .k{width:150px;flex:none}
+.hr{border:0;border-top:1px dashed var(--line);margin:14px 0}
+.subttl{font-weight:700;font-size:14.5px;margin:14px 0 8px;color:var(--primary-d)}
+.kv{display:flex;gap:10px;align-items:baseline;font-size:13px;color:var(--sub);margin-bottom:4px;flex-wrap:wrap}
+.empty{padding:40px 10px;text-align:center;color:var(--sub)}
+.empty .big{font-size:40px;display:block;margin-bottom:8px}
+.totalbar{display:flex;align-items:baseline;justify-content:flex-end;gap:10px;font-size:15px;padding:12px 4px 4px}
+.totalbar b{font-size:22px;color:var(--primary-d)}
+.tag-warn{color:var(--warn);font-size:12px}
+footer{max-width:1080px;margin:0 auto;padding:0 16px 30px;color:#93a3b5;font-size:11.5px;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="logo">⚙️ 设备选购系统<small>内部使用 · 双端适配</small></div>
+    <div class="tabs" id="tabs">
+      <button data-page="shop" class="active">选购</button>
+      <button data-page="cart">方案清单<span class="badge" id="tabBadge">0</span></button>
+      <button data-page="history">历史记录</button>
+      <button data-page="admin">维护</button>
+    </div>
+  </div>
+</div>
+
+<main>
+  <!-- ============ 选购页 ============ -->
+  <div class="page active" id="page-shop">
+    <div class="page-title">🛒 产品选购</div>
+    <div class="searchbar"><input id="searchInput" placeholder="搜索产品名称 / 型号 / 关键词"></div>
+    <div class="chips" id="catChips"></div>
+    <div class="grid" id="productGrid"></div>
+    <div class="empty" id="shopEmpty" style="display:none"><span class="big">🔍</span>没有匹配的产品</div>
+  </div>
+
+  <!-- ============ 方案清单页 ============ -->
+  <div class="page" id="page-cart">
+    <div class="page-title">📋 方案清单 <span class="cnt" id="cartCnt"></span></div>
+    <div class="card">
+      <div class="fgrid" style="margin-top:0">
+        <div><label>需方（客户名称）</label><input id="inpCustomer" placeholder="如：研欣生物科技（绍兴）有限公司" style="width:100%"></div>
+        <div><label>方案 / 项目名称</label><input id="inpProject" placeholder="如：DXDT10 粉剂包装生产线" style="width:100%"></div>
+      </div>
+      <div class="kv" style="margin:6px 0 0">选完产品后可点下方「配套服务」一键加入安装调试 / 包装运输等项目；单价可现场微调，留空 = 待定。</div>
+    </div>
+
+    <div id="cartItems"></div>
+    <div id="cartEmpty" class="card empty"><span class="big">🧺</span>清单还是空的<br><small>去「选购」页添加产品与选配装置</small><br><br><button class="btn" onclick="go('shop')">去选购</button></div>
+
+    <div class="card" id="cartPanel" style="display:none">
+      <div class="subttl" style="margin-top:0">连线顺序预览</div>
+      <div class="flowstrip" id="flowStrip"></div>
+      <div class="subttl">配套服务（一键加入）</div>
+      <div id="svcQuick"></div>
+      <div class="totalbar" id="cartTotal"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+        <button class="btn" onclick="saveRecord()">💾 保存并导出 Excel 记录表</button>
+        <button class="btn ghost" onclick="quoteFromCart()">📄 一键生成报价方案(.doc)</button>
+        <button class="btn ghost" onclick="printQuoteCart()">🖨️ 打印预览</button>
+        <button class="btn gray" onclick="clearCart()">清空清单</button>
+      </div>
+      <div class="kv" style="margin-top:10px">Excel 记录表导出后会自动存入「历史记录」，可随时再次导出或重新生成报价方案。</div>
+    </div>
+  </div>
+
+  <!-- ============ 历史页 ============ -->
+  <div class="page" id="page-history">
+    <div class="page-title">🗂 历史记录 <span class="cnt" id="histCnt"></span></div>
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn ghost" onclick="exportHistoryExcel()">📊 导出全部历史 Excel</button>
+    </div>
+    <div id="histList"></div>
+    <div class="card empty" id="histEmpty" style="display:none"><span class="big">📭</span>暂无历史记录<br><small>在「方案清单」页保存后会出现在这里</small></div>
+  </div>
+
+  <!-- ============ 维护页 ============ -->
+  <div class="page" id="page-admin">
+    <div class="page-title">🛠 数据维护</div>
+    <div class="kv">所有数据保存在本机浏览器中；换设备使用时请用「导出 / 导入配置」同步产品数据。</div>
+
+    <div class="card">
+      <div class="subttl" style="margin-top:0">① 公司信息（用于报价方案抬头与附文）</div>
+      <div class="fgrid">
+        <div><label>供方（公司名称）</label><input id="acSupplier" style="width:100%"></div>
+        <div><label>默认品牌</label><input id="acBrand" style="width:100%"></div>
+        <div><label>税率（%专票）</label><input id="acTax" type="number" style="width:100%"></div>
+        <div><label>报价有效期（天）</label><input id="acValid" type="number" style="width:100%"></div>
+      </div>
+      <label>公司简介（报价方案第一部分）</label><textarea id="acIntro"></textarea>
+      <label style="margin-top:8px">售后服务政策（报价方案末部分）</label><textarea id="acAfter" style="min-height:120px"></textarea>
+      <div style="margin-top:10px"><button class="btn" onclick="saveCompany()">保存公司信息</button></div>
+    </div>
+
+    <div class="card">
+      <div class="subttl" style="margin-top:0">② 产品与选配维护</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn ghost small" onclick="addProduct()">＋ 新增产品</button>
+      </div>
+      <div id="prodAdminList"></div>
+    </div>
+
+    <div class="card">
+      <div class="subttl" style="margin-top:0">③ 数据管理</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn ghost" onclick="exportConfig()">⬇ 导出配置 JSON</button>
+        <button class="btn ghost" onclick="document.getElementById('importFile').click()">⬆ 导入配置 JSON</button>
+        <button class="btn warn" onclick="resetConfig()">↺ 恢复默认产品数据</button>
+        <button class="btn warn" onclick="clearHistory()">🗑 清空历史记录</button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importConfig(this)">
+      <div class="kv" style="margin-top:10px">导入仅更新「公司信息 + 产品数据」，不影响已保存的历史记录。</div>
+    </div>
+
+    <div class="card">
+      <div class="subttl" style="margin-top:0">④ 使用说明</div>
+      <div style="font-size:13.5px;color:var(--sub)">
+        <b>选购流程：</b>选产品 → 勾选选配装置、数量 → 加入清单 → 继续添加其它产品（自动连线排序）→ 需方信息 → 保存导出 Excel / 一键生成报价方案。<br>
+        <b>价格留空</b>即显示「待定」，可事后在维护页或清单里直接填写。<b>单价（万元）</b>为含税价。<br>
+        <b>双端使用：</b>手机 / 电脑浏览器均可打开本页面；数据按设备独立存储，用 JSON 导出导入即可同步。
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 产品详情弹窗 -->
+<div class="modal-mask" id="modalProduct">
+  <div class="modal">
+    <div class="modal-head"><h3 id="mpTitle">产品详情</h3><button class="x" onclick="closeModal('modalProduct')">✕</button></div>
+    <div class="modal-body" id="mpBody"></div>
+  </div>
+</div>
+<!-- 历史详情弹窗 -->
+<div class="modal-mask" id="modalRecord">
+  <div class="modal">
+    <div class="modal-head"><h3 id="mrTitle">记录详情</h3><button class="x" onclick="closeModal('modalRecord')">✕</button></div>
+    <div class="modal-body" id="mrBody"></div>
+  </div>
+</div>
+
+<nav class="bottomnav" id="bottomnav">
+  <button data-page="shop" class="active"><span class="ic">🛒</span>选购</button>
+  <button data-page="cart"><span class="ic">📋</span>清单<span class="badge" id="navBadge">0</span></button>
+  <button data-page="history"><span class="ic">🗂</span>历史</button>
+  <button data-page="admin"><span class="ic">🛠</span>维护</button>
+</nav>
+
+<div id="toast"></div>
+<footer>内部工具 · 数据保存在本机浏览器 · 配置请定期导出 JSON 备份</footer>
+
+<script>
+/* =====================================================================
+   设备选购系统（内部使用） 单文件应用
+   ===================================================================== */
+'use strict';
+
+/* ---------- 种子数据：来自产品详情文档（24个产品+2项配套服务） ---------- */
+function P(i,name,model,cat,price,mainParams,funcDesc,desc,features,params,opts,brand,unit){
+  return {id:i,name:name,model:model,category:cat,price:price,mainParams:mainParams,funcDesc:funcDesc,
+    desc:desc,features:features,params:params,options:opts||[],brand:brand||'南峰',unit:unit||'台'};
+}
+const SEED = {
+  company:{
+    supplier:'凯迈（洛阳）机电有限公司', brand:'南峰', taxRate:13, validityDays:30,
+    intro:'凯迈（洛阳）机电有限公司（原洛阳南峰机电设备制造有限公司）是航空工业空空导弹研究院下属军民融合型国家级高新技术企业。公司成立于1999年7月8日，注册资本6000万元。公司目前拥有专利400余项，其中发明专利80余项（PCT专利2项），软件著作权13项，产品具备完全自主知识产权。\n公司秉承航空工业精益求精的质保体系，严谨治业、精益生产，在业内率先通过了ISO9001质量管理、GJB9001C质量管理、ISO14001环境管理、OHSAS18001职业健康安全管理、ISO/TS16949标准、CMC、CE等认证。\n公司在智能包装设备行业深耕四十年，产品涵盖三边封（四边封）、多列背封、袋中袋（单囊、双囊、三角包）、装盒机、智能理袋机等包装方式。用户涵盖国药集团太极药业、德众药业、振东药业、同仁堂、同济医药等大中型药企，碧生源、天狮、天草、御生堂等保健品生产企业以及福茶、二商京华等大中型茶叶生产企业等。产品远销全球50多个国家和地区，深受用户的信赖和好评。',
+    afterSales:'1、技术支持及售后服务承诺：质保期内，产品出现甲方无法处理的故障时，且是设备自身原因（非甲方原因造成），乙方接到通知后应2小时内做出响应；如需乙方工程师现场维修，乙方应派人员24小时内到达现场并完成故障排除工作，直到恢复正常运转。\n质保期内因制造质量或材料材质质量问题而产生更换与维修的，乙方应免费予以更换和维修。\n产品运行期间，乙方应不定期派员到甲方回访、巡视运行情况，质保期内每年最少一次的免费检修；在质保期届满前的最后一个月，乙方有责任和义务到甲方现场对所供产品进行常规保养、更换损坏的部件。\n每年定期回访，提供技术支持，维修期限内供应商每年至现场作免费检修培训维护、保养以及操作注意事项等1次。\n2、保修期承诺：设备质量保证期不低于1年，设备质量保证有效日为整机合格验收之日开始计算。保修期内因产品质量、机器故障影响需方使用的，供方免费维修，恢复最佳运行状态。'
+  },
+  products:[
+  P('p01','DXDT16型立式背封包装机','DXDT16','包装主机',null,'20-120袋/分',
+    'PLC控制，多电机协同驱动；304不锈钢机架符合GMP；片状、条状、颗粒、丸剂、粉剂、酱液物料均可包装',
+    'DXDT16型机器是一款高性能背封式单列包装设备，通过系列化设计可实现片状、条状、颗粒、丸剂、粉剂、酱液等物料的包装，适用于药品、食品、化工等领域，产品输出形式为三边背封单层袋。',
+    ['PLC控制，多电机协同驱动，安全、可靠、稳定','传感器监控运行状态，故障自动报警停机','机架为304不锈钢材质且表面作抛光处理，符合GMP要求','安全保护：短路保护、过载保护、漏电保护','触摸屏显示，操作简单、维护方便'],
+    [['速度（袋/分）','20-120（视物料和装量而定）；单包/连包'],['物料','颗粒、丸剂、粉剂、酱液；颗粒物料（5-30mm）'],['包装膜宽（mm）','100-320；可定制'],['成袋尺寸（mm）','袋长50-190可调；袋宽50-150（更换成型器）'],['袋成型','平整完好，密封防潮性能好'],['封边错位','±0.5mm'],['包装材料','PP、CPP、PVC、PS、EVA、PET、PVDC/PVC、OPP/CPP等'],['电源功率（kW）','≤5'],['电源类型','220V 50Hz'],['噪声指标','≤80dB(A)']],
+    []),
+  P('p02','DXDS20型双囊袋泡茶包装机','DXDS20','袋泡茶包装机',null,'120±10袋/分',
+    '无铝钉棉线打结；双室袋冷封成型；计量精度±5%；可选热封外袋、外袋打码、自动装盒',
+    '适用于颗粒状、片状等物料（20~60目，如碎茶等）的自动化精密小袋包装，实现双室袋冷封成型，并以绳端打结方式实现棉线、硬标牌、茶袋的连接固定。可选热封外袋、可选外袋打码，包装成品可自动计数、分组堆栈、自动或手动装盒输出。',
+    ['无铝钉，棉线打结连接标签、滤纸袋，卫生、环保、美观','双室袋，冷封成型，适应高端袋包装市场需求','物料适应性广，剂量可调，计量精度达±5%','采用阻尼及张力系统，送卷更平稳','采用集中润滑系统，定时定量润滑','内袋分组计数输出，可选手动/自动装盒功能','先进运控与多轴伺服驱动，运行低噪、稳定可靠','智能HMI，支持多国语言','具备漏电、短路、过载等安全保护功能'],
+    [['包装物料','颗粒状、片状等物料（20~60目，如碎茶等）'],['计量精度','±5%'],['料斗容量','13dm³'],['生产能力','120±10袋/min'],['最大包装容量','10cm³'],['内袋尺寸（L×W）','45×60mm（大袋型），40×60mm（小袋型）'],['外袋尺寸（L×W）','70×80mm（选配定制）'],['标签尺寸（L×W）','28×32mm（硬标签）'],['棉线长度','210±5mm'],['堆栈分组','25袋/组，15-30袋/组可调'],['工作气压','0.6MPa'],['耗气量','400NL/min（含真空上料）；100NL/min（不含）'],['电源','3相380V、50Hz'],['整机功率','4.5kW'],['整机重量','净重4000kg，毛重4250kg'],['整机外形尺寸（L×W×H）','2400×1735×2100mm（不带真空上料）']],
+    [{id:'o02a',name:'热封外袋',price:null,desc:'外袋热封成型（70×80mm 可定制）'},{id:'o02b',name:'外袋打码',price:null,desc:'外袋喷码/打码装置'},{id:'o02c',name:'真空上料系统',price:null,desc:'负压密闭上料'},{id:'o02d',name:'自动装盒功能',price:null,desc:'内袋分组自动装盒输出'}]),
+  P('p03','DXHB30型智能装盒机','DXHB30','装盒理袋设备',null,'60-100盒/分',
+    '专利技术，全伺服自动装盒；纸盒尺寸自动调整；前端可连软袋包装机、后端可连三维透明膜包装机',
+    '适用于成组软袋的高速、全自动装盒。基于专利技术，在PLC及先进伺服驱动下，可自动完成纸盒的吸盒、开盒、移盒，及说明书的自动折叠、软袋的成组输送、同步入盒，最终自动完成折耳、封盒和成品盒输出。采用模块化设计，前端可适配软袋包装机、理袋堆栈，后端可适配三维透明膜包装机，形成一体化解决方案。',
+    ['专业软袋装盒，兼容条形袋、三边封、四边封等袋型','全伺服，纸盒长宽高自动调整，装盒数量宽兼容','后推式入盒，操作面整齐划一','智能化控制，生产辅助决策系统','多轴运控、同步带传动，运行稳定、噪音小'],
+    [['装盒速度','60-100盒/分钟'],['纸盒质量','300-450g/㎡（视纸盒大小而定）'],['尺寸范围','L70-180mm×W45-120mm×H30-90mm'],['说明书质量','60-70g/㎡'],['说明书展开尺寸','（70-320）×（70-210）mm'],['折叠形式范围','1-4折'],['整机外形尺寸','L3150×W1300×H1520mm'],['气压','0.6-0.8MPa'],['耗气量','150-180L/min'],['电源类型','380V 50Hz'],['整机功率','≤4kW'],['整机净重','2000kg']],
+    []),
+  P('p04','DXDT10型单列背封式包装机','DXDT10','包装主机',8.8,'30-50切/分（粉剂）',
+    '需根据具体物料定制不同下料机构，价格会有浮动；本报价为螺杆下料，适合粉剂',
+    '一款高性能的全自动、单列背封式包装设备，具备自动上料、计量、制袋、充填、封口、打码及成品输出等功能。整机采用高精度伺服拉膜系统、PLC、人机界面、光电自动跟踪、恒温控制等技术。通过部分模块更换可实现颗粒、丸剂、粉剂、液体等物料的包装。',
+    ['PLC程序控制、触摸式人机界面、自动跟标、PID数字式恒温控制，运行稳定、生产效率高','包材两侧无需切边设计，降低使用成本','主机机架材料采用SUS304不锈钢','整机清洗方便，拆装快捷，符合GMP要求','短路、过载、漏电等安全保护措施'],
+    [['包装范围','粉剂（颗粒、丸剂、液体）'],['计量范围（ml）','2-40（根据物料状态）'],['袋宽（mm）','20-55'],['制袋长度（mm）','60-180'],['包材使用范围','最大宽度120，最大外径Φ350，芯径Φ76，厚度0.06-0.12'],['包装材料','聚酯/铝/聚乙烯药品包装用复合膜，膜厚69μm±10%'],['填充合格率','≥99%'],['电源规格','220V，50Hz'],['总用电功率','3KW'],['噪声（dBA）','76'],['外形尺寸（W×D×H）','1260×980×1600mm（不含下料）'],['横切频率','30-50次/分钟（粉剂），无极可调'],['重量（kg）','450'],['选配装置','真空上料机构、打码机构、除尘机构、冷却系统、检重机构等']],
+    [{id:'o04a',name:'真空上料系统',price:0.8,desc:'匹配DXDT10型立式背封包装机，负压密闭输送方式上料，全程无尘、减少人工投料与交叉污染，接触物料部分为不锈钢快拆结构'},{id:'o04b',name:'打码机构',price:null,desc:'成品打码装置'},{id:'o04c',name:'除尘机构',price:null,desc:'配套除尘装置'},{id:'o04d',name:'冷却系统',price:null,desc:'配套冷却装置'},{id:'o04e',name:'后道检重秤',price:null,desc:'在线检重，重量不合格自动剔除'}]),
+  P('p05','DXDD30型智能高速（颗粒）包装机','DXDD30','包装主机',null,'设计速度600袋/分',
+    '快换技术（专利）；可选在线检重自适应（自动剔除+装量自动调整）；可拓展理袋装盒',
+    '立足近四十年智能包装设备开发经验，自主研制。整机采用PLC、HMI及多点传感检测控制，采取快换、装量自适应、理袋装盒等自主知识产权技术。通过系列化设计可实现颗粒、粉剂、酱液等物料的高速小袋包装，输出产品形式为单层袋（三边封、四边封）等。',
+    ['快速切换技术：包材快换、下料机构快换（专利技术、易清洗），三边/四边封快速切换','检重自适应：可选配在线检重系统，重量不合格自动剔除并反馈调整装量','智能化控制：PLC、HMI交互，智能传感网络实时监测，堵袋、空包、缺料自动报警停机','理袋装盒：可解决后道包装问题，生产集约性更高','有效生产，节约成本，节省人工，降低能耗'],
+    [['设计速度（袋/分）','600（视物料和装量而定）；单包/连包均可'],['物料','颗粒、丸剂、粉剂、酱液；颗粒物料（20-80目）'],['容量（cm³）','6-60'],['计量精度','±3%（容积计量）'],['成品综合合格率','≥99%'],['理袋装盒数量（袋/盒）','10-30'],['袋型尺寸（mm）','单层袋三边封72W×85H（宽72固定，高50-125可调）；可定制'],['封边错位（mm）','±0.5'],['稳定性','运行4小时内故障停机≤3次，同类故障仅限1次'],['包装辅材','热封型纸/塑、塑/塑、纸/铝/塑、塑/铝/塑等复合膜'],['电源功率（kW）','≤15'],['噪声','≤80dB(A)'],['智能化指标','人机交互，远程控制，支持辅助决策系统']],
+    [{id:'o05a',name:'在线检重系统',price:null,desc:'重量不合格自动剔除，自动反馈调整装量'},{id:'o05b',name:'理袋装盒单元',price:null,desc:'后道理袋计数装盒'}]),
+  P('p06','DXDT10型多列背封式包装机','DXDT10','包装主机',null,'30-50切/分（粉剂）',
+    '全伺服多列背封，4-12列；正面接膜设计；符合GMP',
+    '一款高性能的全自动、多列背封式包装设备，具备自动上料、计量、制袋、充填、封口、打码及成品输出等功能。整机采用全伺服驱动控制、高精度送膜系统、PLC、人机界面、光电自动跟踪、恒温控制等技术。通过部分模块更换可实现颗粒、丸剂、粉剂、液体等物料的包装。',
+    ['整机全伺服驱动：速度快、拉膜平整、包材适用性强、袋型美观、噪音低、寿命长','智能化控制，操作简单','正面接膜设计，接膜简单易操作','整机清洗方便，拆装快捷，符合GMP','生产过程自动控制：充填、张力、封合温度、裁切速度、切线控制、无级调速、单袋分切'],
+    [['包装范围','粉剂（颗粒、丸剂、液体）'],['计量范围（ml）','2-40'],['列数','4-12'],['袋宽（mm）','20-60'],['制袋长度（mm）','60-180'],['包材使用范围','最大宽度450，最大外径Φ350，芯径Φ76，厚度0.06-0.12'],['包装材料','聚酯/铝/聚乙烯药品包装用复合膜，膜厚69μm±10%'],['填充合格率','≥99%'],['电源规格','380V'],['总用电功率','8-12KW'],['噪声（dBA）','76'],['外形尺寸（W×D×H）','1600×2000×2100mm（不含下料）'],['横切频率','30-50次/分钟（粉剂），无极可调'],['重量（kg）','1700']],
+    [{id:'o06a',name:'真空上料系统',price:null,desc:'负压密闭上料'}]),
+  P('p07','DXHL10多维整理系统（AI版）','DXHL10','装盒理袋设备',null,'>200袋/分',
+    'AI控制整理系统：无回流、同面同向、能量回收（整机仅1.1kW）；新产品导入无需编程；可选DXHL10F滚珠分流机',
+    '应用于药品、食品、化工等软袋包装（三边封、四边封、背封、异型袋等）的整理、计数并有序输出，实现后道包装中的检测、装盒、装袋、装箱等自动供料。采取专用AI控制处理器、混合伺服系统等智能化设计，具备高度智能化、环保节能、安全、快速维护等特点。',
+    ['无回流：避免产品重复跌落、挤压，提高效率','同面同向：一次输送即可完成物料在线转向、首尾一致、正反有序','能量回收：混合伺服系统，整理系统功率仅1.1kW','新产品快速导入：专用控制系统及AI算法，无需编程','快速维护：两分钟快速维护','适用范围广：长45-200mm/宽10-150mm/厚1-40mm/重2-200g软袋产品'],
+    [['整理机速度','大于200袋/分钟'],['整理机外形尺寸','800×320×400mm'],['整理机最大功率','350W'],['理袋机功能','零散堆积料包的分离、转向、等间距输出、计数'],['理袋机速度','150-220袋/分钟'],['理袋机外形尺寸','3457×700×1350mm'],['理袋机最大功率','1.1kW'],['理袋机耗气量','持续0.6m³/min'],['同面同向机速度','140-170袋/分钟'],['同面同向机外形尺寸','2493×600×1258mm'],['同面同向机最大功率','4.4kW'],['适用范围','长45-200mm/宽10-150mm/厚1-40mm/重2-200g软袋']],
+    [{id:'o07a',name:'DXHL10F滚珠分流机',price:null,desc:'水平式分流，解决挤压跌落二次变形与大流量堵料；实时动态多通道均匀分配（600-1500袋/分钟）'}]),
+  P('p08','袋泡茶自动装盒（立式）生产线','立式装盒线','整线生产线',null,'105±5袋/分',
+    '内袋包装+外袋包装+理袋+立式装盒整线集成；PLC控制、节拍精准；符合GMP',
+    '适用于立式装盒需求的袋泡茶包装自动化生产线体，具备智能化控制，生产稳定、效率高、安装调试方便等特点。主要用于碎茶和其它类似颗粒物料的包装（20~60目散状无粘性颗粒状或片状物料）。功能包括内袋包装、外袋包装、理袋、立式装盒等，通过自动控制系统有机集成。',
+    ['整线PLC控制，节拍精准、配置多样，保留拓展接口','可按需选配自动上料、制袋包装、整理计数、自动装盒','整理系统电子点包计数，柔性设定装盒数量，一键操作','人机界面数字签名功能，操作权限按等级分配','整线符合GMP认证要求'],
+    [['生产线速度','105±5袋/分'],['装盒袋数','5-10袋/盒'],['袋型尺寸（L×W）','L70-100mm×W75-95mm'],['纸盒生产规格','30-55mm×74-105mm×80-100mm'],['纸盒纸质要求','250-350g/㎡'],['纸盒样式','自扣底预制盒'],['封盒样式','插舌或热熔胶粘接'],['气压','0.6-0.8MPa'],['电源类型','380V/220V 50Hz']],
+    []),
+  P('p09','DXDD11型智能袋泡茶包装机','DXDD11','袋泡茶包装机',null,'最大150袋/分',
+    '定量给料、热封内袋、自动挂线贴标、内袋自动计数入盒；PLC控制',
+    '在DXDC8I型机的基础上开发的全自动袋泡茶包装机，适用于医药、保健、食品等行业，适合包装物料为20目~60目、均质、具有较好流动性的颗粒状/片状茶或经破碎了的其他类似物料，具有定量给料、热封内袋、自动挂线贴标、内袋自动计数入盒功能。',
+    ['整机智能PLC控制系统、触摸屏显示','生产计数功能，方便生产管理','缺料、堵包、空包、标签和棉线检测报警、自动停机','全新外观设计，符合GMP和CE认证要求','分组计数堆栈，自动入盒，减少人工劳动'],
+    [['整机包装速度','最大150袋/min'],['最大包装容量','6cm³'],['内袋尺寸（mm）','62.5×50'],['标签尺寸（mm）','28×24（冷封缺口）'],['滤纸幅宽','125mm'],['棉线长度','210±5mm'],['电源电压','220V或380V'],['装盒数量（袋/盒）','25/50/100；30/60；20/40'],['总装机容量','1.5kW'],['包装成品合格率','≥97%'],['净重/毛重','750kg / 860kg'],['噪声','≤80dB(A)']],
+    []),
+  P('p10','DXD01KM120型高速智能袋泡茶包装机','DXD01KM120','袋泡茶包装机',null,'240袋/分（双列）',
+    '双列同步输出；棉线隐藏式设计；抽屉式双工位计量下料；可拓展成品堆栈装盒',
+    '主要用于碎茶和其它类似颗粒物料的包装（20~40目散状无粘性颗粒状或片状物料），可实现自动上料、内袋双列分切、标签滤纸棉线热封焊接、茶包计数堆栈分组输出等功能；可定制内袋汇总送入外袋、外袋热封成型、成品设计分组输出等功能。',
+    ['双列同步输出，极大提高出产效率','袋型新颖：内袋背封式、双插脚、带倒角','棉线隐藏式设计，长度可调','标签-棉线-滤纸自动热封焊接','新型抽屉式双工位计量下料','包材主动放卷、双列分切、自动纠偏','可定制不同规格内外袋','可拓展成品堆栈、装盒等功能'],
+    [['包装物料','碎茶及类似颗粒物料（20-40目）'],['最大装量','6±5%；9±5%；12±5%（cm³/袋）'],['内袋尺寸（mm）','40×60；45×65；50×80'],['外袋尺寸（mm）','70×80；75×95'],['标签尺寸（mm）','20×24'],['棉线长度','150±5mm'],['单列最大速度','120次/分'],['整机最大效率','240袋/分'],['电源','380VAC'],['装机容量','10kW'],['气源','6bar，400L/min'],['其他功能','缺料、故障报警等']],
+    [{id:'o10a',name:'外袋热封成型单元',price:null,desc:'内袋汇总送入外袋、外袋热封成型、成品分组输出'},{id:'o10b',name:'成品堆栈装盒拓展',price:null,desc:'成品堆栈、自动装盒'}]),
+  P('p11','DXDD20型智能袋泡茶包装机','DXDD20','袋泡茶包装机',null,'120±5袋/分',
+    '125袋/分效率；伺服驱动PLC控制；可选配外袋封边裁切装置、真空上料',
+    '热封式、多功能、全自动袋泡茶包装机，适用于医药、保健、食品等行业散状无粘性颗粒物品的包装。整机采用PLC、HMI和伺服控制，智能化程度高、操作简单、维护方便。',
+    ['高效率：可达125袋/分钟','高合格率：大大解决压包问题','高稳定性：整机伺服驱动，PLC控制，传感器检测','美观：可选配外袋封边裁切装置','智能化：可实现远程控制等'],
+    [['生产能力','120±5袋/min'],['最大包装容量','10cm³'],['内袋尺寸（L×W）','62.5×65mm'],['外袋尺寸（L×W）','82×75mm'],['标签尺寸（L×W）','24×28mm'],['滤纸幅宽','125mm或140mm'],['标签线长','220mm'],['工作气压','0.6MPa'],['耗气量','300L/min（真空上料）；100L/min（无）'],['电源','AC 220V/380V'],['整机功率','3kW'],['净重/毛重','1410kg / 1660kg'],['整机外形尺寸','2840×1290×2205mm']],
+    [{id:'o11a',name:'外袋封边裁切装置',price:null,desc:'外袋封边裁切，成品更美观'},{id:'o11b',name:'真空上料',price:null,desc:'配套真空上料系统'}]),
+  P('p12','DXDD16型智能袋泡茶包装机','DXDD16','袋泡茶包装机',null,'115±5袋/分',
+    '外袋冷封纸环保易降解；光电自动跟踪；PLC+HMI+伺服控制',
+    '在CCFD6型机的基础上开发的全自动袋泡茶包装机，适用于医药、保健、食品等行业散状无粘性颗粒/片状（20-60目）物料的包装。具有定量给料、热封内袋、自动挂线贴标、外袋封装功能，外袋采用冷封纸滚压封合。',
+    ['整机智能PLC控制系统、触摸屏显示','光电自动跟踪色点、商标定位准确','生产计数功能，方便生产管理','缺料、堵包、空包、标签和棉线检测报警、自动停机','全新外观设计，符合GMP和CE认证要求','外袋冷封纸、环保易降解'],
+    [['生产能力','115±5袋/min'],['最大包装容量','6cm³'],['内袋尺寸（L×W）','62.5×50mm'],['外袋尺寸（L×W）','70×65mm'],['标签尺寸（L×W）','24×28mm（热封标签）'],['标签线长','210±5mm'],['电源','AC 220V/380V'],['整机功率','1.5kW'],['净重/毛重','750kg / 860kg'],['整机外形尺寸','1700×900×2000mm']],
+    []),
+  P('p13','DXDD21型智能袋泡茶包装机','DXDD21','袋泡茶包装机',null,'120±5袋/分',
+    '热封标签无胶化；空袋检测自动剔除；伺服外袋牵引；缺料缺标缺线报警',
+    '在DXD01KC6型机的基础上新开发的热封式、多功能、全自动袋泡饮品智能包装机，适用于医药、保健、食品等行业散状无粘性颗粒（20-60目）物品的包装。',
+    ['高效率：可达125袋/分钟','高合格率：大大解决压包问题','高稳定性：整机伺服驱动，PLC控制，传感器检测','环保：热封标签，实现无胶标签','伺服控制外袋牵引精准；光电自动跟踪色标','空袋检测、自动剔除','缺料、缺标、缺线报警提醒','堵包、过载、失温异常自动停机'],
+    [['生产能力','120±5袋/min'],['最大包装容量','6cm³'],['内袋尺寸（L×W）','62.5×50mm'],['外袋尺寸（L×W）','70×80mm'],['标签尺寸（L×W）','24×28mm'],['标签线长','210±5mm'],['滤纸幅宽','125mm或140mm'],['工作气压','0.6MPa'],['耗气量','300L/min（真空上料）；100L/min（无）'],['电源','AC 220V/380V'],['整机功率','3kW'],['净重/毛重','1410kg / 1660kg'],['整机外形尺寸','2840×1290×2205mm']],
+    [{id:'o13a',name:'外袋封边裁切装置',price:null,desc:'外袋封边裁切'},{id:'o13b',name:'真空上料',price:null,desc:'配套真空上料系统'}]),
+  P('p14','袋泡茶自动装盒生产线','装盒线','整线生产线',null,'110袋/分',
+    '自动上料+内袋+外袋+理袋+装盒集成整线；电子点包计数柔性设定；GMP',
+    '机电一体化高新技术产品，具备智能化控制、集成化程度高、占地面积小、安装调试方便等特点。主要功能可包含自动上料、内袋包装、外袋包装、理袋、装盒等，通过自动控制系统有机集成。',
+    ['整线PLC控制，节拍精准、配置多样，保留拓展接口','可按需选配自动上料、制袋包装、整理计数、自动装盒','整理系统电子点包计数、柔性设定装盒数量，一键操作','人机界面数字签名，操作权限按等级分配','整线符合GMP认证要求'],
+    [['生产线速度','110袋/分'],['装盒袋数','15-30袋/盒'],['袋型尺寸（L×W）','L70-100mm×W75-95mm'],['纸盒生产规格','85-160mm×75-105mm×78-98mm'],['生产线外形尺寸','2900×1600×2300mm'],['气压','0.6-0.8MPa'],['电源类型','380V/220V 50Hz'],['整线功率','4.5KW'],['整线重量','1900kg']],
+    []),
+  P('p15','DXHB20型智能理袋装盒机','DXHB20','装盒理袋设备',null,'130袋/分（Max）',
+    '理袋、计数堆栈、装盒一体化；侧推入盒；伺服+凸轮驱动',
+    '伺服控制的水平间歇式装盒机，集成理袋、计数堆栈、装盒功能，适用于插舌式纸盒。用于制药、保健品、茶叶、咖啡等行业包装袋装盒，物料通过侧推入盒，过程简单、性能可靠、易维护。',
+    ['整机PLC控制，伺服电机与凸轮驱动，人机操作界面','理袋、计数堆栈、装盒一体化，结构紧凑、占地面积小','设备状态实时显示，自动计数、提示故障报警','人机界面符合数字签名要求，操作权限按等级分配'],
+    [['生产速度','130袋/分（Max）'],['装盒袋数','15-30袋/盒'],['袋型尺寸','W70×H80mm，W82×H75mm'],['纸盒生产规格','L85-160mm×W73-85mm×H78-83mm'],['整机外形尺寸','L1900×W1000×H1350mm'],['气压','0.6-0.8MPa'],['电源类型','220V 50Hz'],['整机功率','1.5kW'],['盒输出高度','680mm'],['整机净重','380kg']],
+    []),
+  P('p16','DXDC8V型袋泡茶包装机','DXDC8V','袋泡茶包装机',null,'110±5袋/分',
+    '一外袋多内袋（3-10包）；点线连接N袋一切断；热封标签机构',
+    '可实现一个外袋装多个内袋，适用于医药、保健、食品等行业散状无粘性颗粒物品包装，如CTC红茶、绿碎茶等。整机PLC控制，触摸屏显示。',
+    ['热封标签机构，实现热封标签','伺服控制外袋牵引，定位准确','高品质封合结构，气密性好，每袋点线连接、N袋一切断','光电自动跟踪色点，商标定位准确','传感器监控堵袋、缺料报警停机','不锈钢一体化成型器，拆装方便','可用塑/塑、塑/铝/塑等多种热封复合包装材料'],
+    [['生产能力','110±5袋/min'],['最大包装容量','内袋6cm³，外袋3-10包'],['内袋尺寸（L×W）','62.5×50mm'],['外袋尺寸（L×W）','130×100mm（宽度固定）'],['标签尺寸（L×W）','24×26mm（热封标签）'],['滤纸幅宽','125mm'],['标签线长','210±5mm'],['电源','AC 220V/380V'],['总功率','2KW'],['工作气压','0.6MPa'],['耗气量','65L/min'],['净重/毛重','910kg / 1200kg'],['整机外形尺寸','1400×905×2474mm']],
+    []),
+  P('p17','DXDC10型双囊袋泡茶包装机','DXDC10','袋泡茶包装机',null,'120±10袋/分',
+    '双囊内袋冷封成型+铝钉连接；高品质袋泡茶双囊包装；计量精度±5%',
+    '全自动、多功能、智能化茶叶包装设备。可实现双囊内袋冷封成型，自动完成硬标签、棉线和内袋通过铝钉的可靠连接。双囊袋所用滤纸为冷封滤纸，原料在水中易于浸出，立体结构使茶袋易沉入水中，高品质袋泡茶均采用双囊包装。',
+    ['多个伺服电机多轴多电机驱动，机械传动噪声低、定位准确','新型计量结构适应多种物料，剂量连续可调，精度±5%','双囊冷封成型，适应高端袋包装市场','硬标签+棉线+内袋专利技术固定连接','内袋分组计数输出，实现手动装盒','铝钉成型技术完成内袋、标签、棉线可靠连接','集中润滑系统，定时定量润滑'],
+    [['生产能力','120±10袋/min'],['最大包装容量','10cm³'],['内袋尺寸（L×W）','45×60mm（大袋型），40×60mm（小袋型）'],['标签尺寸（L×W）','28×32mm（热封标签）'],['标签线长','148±5mm'],['铝钉尺寸','13mm（折弯成型后5mm）'],['工作气压','0.6MPa'],['耗气量','300NL/min'],['电源','3相220V/380V'],['整机功率','10KW'],['净重/毛重','4000kg / 4250kg'],['整机外形尺寸','3500×1500×2400mm']],
+    []),
+  P('p18','DXDW120外袋包装机','DXDW120','袋泡茶包装机',null,'120袋/分',
+    '外袋二次封装提高密封防潮；自动计数堆栈分组；伺服+PLC控制',
+    '自动化精密设备，用于将内包装物料放入自动成型的外袋之中。二次封装的外封套起到提高包装密封、防潮，增加保质期的作用，且便于携带；外封套上印刷的精美图案对包装物起到宣传作用。',
+    ['安全保护：短路保护、过载保护、漏电保护','自动计数并堆栈分组输出','纸/塑、塑/塑、塑/铝/塑、纸/铝/塑等多种可热封复合膜精美包装','封口效果好，袋型美观','整机伺服和PLC控制、触摸屏显示，操作简单、维护方便'],
+    [['生产能力','120袋/min'],['外袋尺寸（L×W）','70×80mm'],['包装材料','纸/塑、塑/塑、塑/铝/塑、纸/铝/塑等复合膜'],['电源','AC 220V'],['整机功率','2kW'],['净重/毛重','600kg / 750kg'],['整机外形尺寸','2300×1285×1230mm']],
+    []),
+  P('p19','DXD01KC20大剂量袋泡茶包装机','DXD01KC20','袋泡茶包装机',null,'105±5袋/分',
+    '大剂量（3-6g）包装，适合中草药混合颗粒；空内袋检测自动剔除',
+    '新研制开发的热封式、多功能、全自动袋泡饮品包装机。适用于医药、保健、食品等行业散状无粘性颗粒或片状物料，特别适合于中草药混合颗粒制剂的大剂量袋泡包装。',
+    ['适用于大剂量物料（3-6g）的包装','缺料、内/外袋堵包报警停机','空内袋检测、自动剔出功能','分组计数输出功能','伺服控制外袋牵引，定位准确','光电自动跟踪色点，商标定位准确'],
+    [['生产能力','105±5袋/min'],['最大包装容量','20cm³'],['内袋尺寸（L×W）','75×75mm'],['外袋尺寸（L×W）','95×95mm'],['滤纸幅宽','140mm'],['工作气压','0.6MPa'],['耗气量','300L/min（真空上料）；100L/min（无）'],['电源','AC 220V/380V'],['整机功率','3kW'],['净重/毛重','1410kg / 1660kg'],['整机外形尺寸','2800×1310×2205mm']],
+    [{id:'o19a',name:'真空上料',price:null,desc:'配套真空上料系统'}]),
+  P('p20','DXD01YS80型袋泡茶包装机','DXD01YS80','袋泡茶包装机',null,'80±5袋/分',
+    '超声波封切技术；高速电子称量+重量不合格剔出；原茶内外袋一体式',
+    '超声波封合、高速全自动、原茶内外袋一体式袋泡饮品包装机。适用于原茶、医药、保健、食品等行业散状无粘性物品包装。内袋透水性与视觉透视性强；经外袋包装后最大限度保持物料的色、香、味特性。',
+    ['整机符合GMP和CE认证要求','超声波封切控制技术，工作稳定、封合质量高','高速电子称量系统，称量精度高、重量不合格剔出装置','缺料、内/外袋堵包报警停机','内外袋独立控制，方便调试、减少包材浪费','分组计数输出；伺服控制外袋牵引，商标定位准确'],
+    [['生产能力','80±5袋/min'],['最大包装容量','10cm³'],['内袋尺寸（L×W）','60×58mm'],['外袋尺寸（L×W）','82×75mm'],['工作气压','0.6MPa'],['耗气量','200L/min'],['电源','AC 220V'],['整机功率','3kW'],['净重/毛重','1300kg / 1450kg'],['整机外形尺寸','2300×1300×1800mm']],
+    []),
+  P('p21','三角袋内外袋一次成型生产线','三角袋线','整线生产线',null,'50袋/分',
+    '内外袋一次成型；送料→称量→制袋→喷码→装箱→打包→码垛全流程自动完成',
+    '光、机、电自动化、智能化的包装生产线，可自动完成送料、称量、充填制袋、输出、喷码、三维膜包装、开箱、装箱、封箱、打包、码垛的全部过程。',
+    ['内外袋一次成型，全流程自动化'],
+    [['包装速度','50袋/min'],['三角袋尺寸（边长）','50/60/70/80mm'],['平袋尺寸','50×50、60×58、70×65、80×72mm'],['包装容量','5-40cm³'],['外袋尺寸','90×95mm（标配）；80×85、100×105mm'],['堆栈数量','5袋/组'],['外袋包装材料','塑/塑、铝/塑等复合膜'],['包装材料（内袋）','食品应用级无纺布或尼龙滤布'],['包装材料幅宽','120/140/160/180mm'],['功率','1.2KW（内袋机）/2.1KW（外袋机）'],['工作气压','0.6MPa'],['净重','420kg']],
+    []),
+  P('p22','DXDC50B型袋泡茶包装机','DXDC50B','袋泡茶包装机',null,'60袋/分',
+    '超声波封切三角包/平袋；无纺布、尼龙滤布、PET及PLA包材；PLC控制',
+    '三角包袋泡茶包装机集光、机、电于一体，采用PLC编程控制和电脑屏操作界面，引用先进的超声波封切技术，包装运行稳定、包材适应性强，可适应国产/进口食品应用级无纺布、尼龙滤布、PET及PLA等包装材料，生产三棱立体茶包/四边形平袋茶包，可用于绿茶、红茶、乌龙茶等原茶及花草茶、大颗粒中草药饮片的包装。',
+    ['PLC控制，多电机协同驱动，安全、可靠、稳定','传感器监控运行状态，故障自动报警停机','改进型超声波封合、切割技术，封切牢固可靠','安全保护：短路保护、过载保护、漏电保护','触摸屏显示，操作简单、维护方便'],
+    [['生产能力','60袋/min'],['最大包装容量','5-40cm³'],['内袋尺寸','三角袋50/60/70/80mm；平袋50×50~80×72mm'],['工作气压','0.6MPa'],['耗气量','100L/min'],['电源','AC 220V'],['整机功率','1.2kW'],['净重/毛重','420kg / 550kg'],['整机外形尺寸','924×1130×2100mm']],
+    []),
+  P('p23','DXD05CW180型袋泡茶包装机','DXD05CW180','袋泡茶包装机',null,'80袋/分',
+    '与DXDC50B对接的三角袋外袋专用机；模块化设计内外袋独立切换',
+    '三角袋外袋包装专用设备，整机PLC控制、伺服驱动、触摸屏操作。可与三角袋内袋包装机（DXDC50B）对接，实现三角包立体茶袋外封包装，保证所包装物料的色、香俱全，延长保质期。',
+    ['模块化设计，内外袋独立切换','适用多种内袋规格的外袋封装','外袋堵包自动报警停机','具备堆栈、分组技术输出功能','整机符合GMP和CE认证要求','伺服控制外袋牵引，商标定位准确'],
+    [['生产能力','80袋/min'],['外袋尺寸（L×W）','80×85、90×95、100×105mm'],['工作气压','0.6MPa'],['耗气量','140L/min'],['电源','AC 220V'],['整机功率','2.1kW'],['净重','600kg（包装机）+80kg（输送带）'],['整机外形尺寸','2700×1450×1300mm']],
+    []),
+  P('p24','全自动袋泡茶生产线','全自动线','整线生产线',null,'—',
+    '输送转运/产品包装/产品检测/产品标识/整体控制五大板块；可定制内外包分装解决方案',
+    '集光、机、电、气于一体的现代化生产线，可自动完成「物料输送、产品包装、产品检测、产品标识、整体控制」五大板块全部过程。整线采用先进控制系统，HMI对话，工作稳定，精简人力，节约成本。可根据实际需求定制内、外包分装解决方案。',
+    ['输送转运：自动上料及下料、半成品及成品输送','产品包装：袋泡茶包装、茶袋装盒、茶盒覆膜、茶盒装箱','产品检测：检重选别、金属检测、X光检测、视觉检测','产品标识：实时贴标、激光打码','整体控制：逻辑控制、故障报警'],
+    [['适配茶袋','DXDD21（70×80）；DXDD20（82×75）'],['纸盒规格','长30-125×宽75/85×高85/90mm'],['覆膜规格','长30-125×宽75/85×高85/90mm'],['纸箱规格','长200-450×宽150-400×高100-350mm']],
+    [{id:'o24a',name:'检重选别',price:null,desc:'在线检重，不合格剔除'},{id:'o24b',name:'金属检测',price:null,desc:'在线金属检测'},{id:'o24c',name:'X光检测',price:null,desc:'在线X光异物检测'},{id:'o24d',name:'视觉检测',price:null,desc:'在线视觉检测'},{id:'o24e',name:'实时贴标',price:null,desc:'在线贴标'},{id:'o24f',name:'激光打码',price:null,desc:'在线激光打码'}]),
+  /* 配套服务 */
+  P('svc01','安装及调试费','—','配套服务',0,'无','安装就位，相关技术人员、工程师培训','安装就位，相关技术人员、工程师培训。',[],[],[],'凯迈','次'),
+  P('svc02','包装、运输','—','配套服务',0.5,'无','供方负责运输','供方负责运输。',[],[],[],'凯迈','次')
+  ]
+};
+
+/* ---------- 工具 ---------- */
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+let _uid=Date.now()%100000;
+const uid=()=>(++_uid).toString(36)+Math.random().toString(36).slice(2,7);
+const fmtW=n=>n==null?'待定':(Math.round(n*100)/100)+'';
+const fmtY=n=>n==null?'待定':'¥'+(Math.round(n*100)/100)+' 万';
+function toast(msg){const t=document.createElement('div');t.className='toast-item';t.textContent=msg;$('#toast').appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),320)},2200);}
+function download(name,blobOrU8,mime){
+  const blob = blobOrU8 instanceof Blob ? blobOrU8 : new Blob([blobOrU8],{type:mime||'application/octet-stream'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},800);
+}
+function nowStr(){const d=new Date();const p=n=>(n<10?'0':'')+n;return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());}
+function idStr(){const d=new Date();const p=n=>(n<10?'0':'')+n;return 'BJ'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());}
+function addDays(days){const d=new Date(Date.now()+days*86400000);const p=n=>(n<10?'0':'')+n;return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+p(d.getDate())+'日';}
+
+/* ---------- 状态 ---------- */
+const LS_KEY='bjSelectorDB_v1';
+let db;
+function freshDB(){const s=JSON.parse(JSON.stringify(SEED));return {company:s.company,products:s.products,cart:{customer:'',project:'',items:[]},history:[]};}
+function load(){
+  try{const raw=localStorage.getItem(LS_KEY);if(!raw)return null;const o=JSON.parse(raw);if(!o.products)return null;return o;}catch(e){return null;}
+}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(db));}catch(e){toast('保存失败：浏览器存储不可用');}}
+db=load()||freshDB();save();
+const prodById=id=>db.products.find(p=>p.id===id);
+const svcProducts=()=>db.products.filter(p=>p.category==='配套服务');
+
+/* ---------- 导航 ---------- */
+function go(page){
+  $$('.page').forEach(p=>p.classList.remove('active'));
+  $('#page-'+page).classList.add('active');
+  $$('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+  $$('#bottomnav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+  window.scrollTo(0,0);
+  if(page==='cart')renderCart();
+  if(page==='history')renderHistory();
+  if(page==='admin')renderAdmin();
+}
+$$('#tabs button').forEach(b=>b.onclick=()=>go(b.dataset.page));
+$$('#bottomnav button').forEach(b=>b.onclick=()=>go(b.dataset.page));
+
+/* ---------- 选购页 ---------- */
+let curCat='全部',curKw='';
+function cats(){const set=new Set(db.products.map(p=>p.category));return ['全部',...Array.from(set)];}
+function renderChips(){
+  $('#catChips').innerHTML=cats().map(c=>`<button class="chip${c===curCat?' active':''}" onclick="pickCat('${esc(c)}')">${esc(c)}</button>`).join('');
+}
+function pickCat(c){curCat=c;renderChips();renderGrid();}
+function renderGrid(){
+  const kw=curKw.toLowerCase();
+  const list=db.products.filter(p=>(curCat==='全部'||p.category===curCat)&&(!kw||(p.name+p.model+p.category+(p.mainParams||'')).toLowerCase().includes(kw)));
+  $('#shopEmpty').style.display=list.length?'none':'block';
+  $('#productGrid').innerHTML=list.map(p=>{
+    const opts=p.options.length?`⚙️ 选配 ×${p.options.length}`:'';
+    return `<div class="pcard">
+      <div class="p-name">${esc(p.name)}</div>
+      <div><span class="p-cat">${esc(p.category)}</span></div>
+      <div class="p-mp">${esc(p.mainParams||'')}</div>
+      <div class="p-foot">
+        <span class="${p.price==null?'price pending':'price'}">${p.price==null?'价格待定':'¥'+p.price+' 万'}</span>
+        <button class="btn small" onclick="openProduct('${p.id}')">选配 ➤</button>
+      </div>
+      ${opts?`<div class="p-opts">${opts}</div>`:''}
+    </div>`;}).join('');
+}
+$('#searchInput').oninput=e=>{curKw=e.target.value.trim();renderGrid();};
+
+/* ---------- 产品详情弹窗 ---------- */
+let mQty=1;
+function openProduct(pid){
+  const p=prodById(pid);if(!p)return;
+  mQty=1;
+  $('#mpTitle').textContent=p.name;
+  let h=`<div class="kv"><span>型号：${esc(p.model)}</span><span>类别：${esc(p.category)}</span><span>单价：<b class="${p.price==null?'price pending':'price'}">${fmtY(p.price)}</b></span></div>`;
+  h+=`<div class="subttl">产品介绍</div><div style="font-size:14px">${esc(p.desc||'—').replace(/\n/g,'<br>')}</div>`;
+  if(p.features.length){h+=`<div class="subttl">技术特点</div><ol style="margin:0;padding-left:22px;font-size:14px">${p.features.map(f=>`<li style="margin-bottom:4px">${esc(f)}</li>`).join('')}</ol>`;}
+  if(p.params.length){h+=`<div class="subttl">技术参数</div><div class="tbl-wrap"><table class="tbl"><tbody>${p.params.map(kv=>`<tr><td style="width:40%;background:#f7fafd"><b>${esc(kv[0])}</b></td><td>${esc(kv[1])}</td></tr>`).join('')}</tbody></table></div>`;}
+  if(p.options.length){
+    h+=`<div class="subttl">可选配置（勾选后作为报价单行项）</div>`;
+    h+=p.options.map(o=>`<label class="optrow" id="opt_${o.id}">
+      <input type="checkbox" value="${o.id}">
+      <span style="flex:1"><span class="o-name">${esc(o.name)}　<span class="${o.price==null?'price pending':'price'}" style="font-size:13px">${fmtY(o.price)}</span></span>
+      ${o.desc?`<span class="o-desc" style="display:block">${esc(o.desc)}</span>`:''}</span></label>`).join('');
+  } else {
+    h+=`<div class="subttl">可选配置</div><div class="kv">该产品暂未维护选配项，可在「维护」页添加。</div>`;
+  }
+  h+=`<hr class="hr"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div><label>数量</label>
+      <span class="qtybox"><button onclick="mQtySet(-1)">−</button><span id="mQtyV">1</span><button onclick="mQtySet(1)">＋</button></span>　<span class="kv" style="display:inline">单位：${esc(p.unit)}</span></div>
+    <div style="flex:1"></div>
+    <button class="btn" onclick="addToCart('${p.id}')">＋ 加入方案清单</button>
+  </div>`;
+  $('#mpBody').innerHTML=h;
+  $('#modalProduct').classList.add('show');
+}
+function mQtySet(d){mQty=Math.max(1,mQty+d);$('#mQtyV').textContent=mQty;}
+function closeModal(id){$('#'+id).classList.remove('show');}
+$$('.modal-mask').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');}));
+
+function addToCart(pid){
+  const p=prodById(pid);if(!p)return;
+  const sel=$$('#mpBody .optrow input:checked').map(i=>p.options.find(o=>o.id===i.value)).filter(Boolean);
+  db.cart.items.push({uid:uid(),pid:p.id,kind:p.category==='配套服务'?'service':'product',
+    name:p.name,mainParams:p.mainParams||'无',qty:mQty,unit:p.unit,price:p.price,funcDesc:p.funcDesc||'',brand:p.brand||db.company.brand});
+  sel.forEach(o=>db.cart.items.push({uid:uid(),pid:p.id,kind:'option',name:o.name,mainParams:'无',qty:1,unit:p.unit||'套',price:o.price,funcDesc:o.desc||('选配：'+o.name),brand:p.brand||db.company.brand}));
+  save();updateBadges();
+  toast(sel.length?`已加入：${p.name} + ${sel.length} 项选配`:`已加入：${p.name}`);
+  closeModal('modalProduct');
+}
+
+/* ---------- 方案清单 ---------- */
+function cartKnown(items){let s=0;items.forEach(r=>{if(r.price!=null)s+=r.price*r.qty;});return s;}
+function cartHasPending(items){return items.some(r=>r.price==null);}
+function renderCart(){
+  $('#inpCustomer').value=db.cart.customer;$('#inpProject').value=db.cart.project;
+  const items=db.cart.items;
+  const empty=items.length===0;
+  $('#cartEmpty').style.display=empty?'block':'none';
+  $('#cartPanel').style.display=empty?'none':'block';
+  $('#cartCnt').textContent=empty?'空':`${items.length} 行项`;
+  if(empty)return;
+  const wide=window.innerWidth>=768;
+  let h='';
+  if(wide){
+    h=`<div class="card"><table class="tbl"><thead><tr><th style="width:34px">序号</th><th>设备型号 / 名称</th><th style="width:130px">主要参数</th><th style="width:80px">数量</th><th style="width:46px">单位</th><th style="width:110px">单价(万)</th><th style="width:86px">总价(万)</th><th style="width:150px">操作</th></tr></thead><tbody>`;
+    items.forEach((r,i)=>{
+      const total=r.price==null?null:Math.round(r.price*r.qty*100)/100;
+      h+=`<tr><td class="num">${i+1}</td>
+      <td><b>${esc(r.name)}</b>${r.kind==='option'?'<div class="mini">（选配行项）</div>':''}<div class="mini">${esc(r.funcDesc||'').slice(0,40)}</div></td>
+      <td class="mini">${esc(r.mainParams)}</td>
+      <td class="num"><input type="number" min="1" value="${r.qty}" onchange="rowSet('${r.uid}','qty',this.value)"></td>
+      <td class="num">${esc(r.unit)}</td>
+      <td class="num"><input class="wide" type="number" min="0" step="0.1" placeholder="待定" value="${r.price==null?'':r.price}" onchange="rowSet('${r.uid}','price',this.value)"></td>
+      <td class="num"><b>${total==null?'<span class="tag-warn">待定</span>':total}</b></td>
+      <td class="num"><button class="btn gray small" onclick="rowMove('${r.uid}',-1)">↑</button> <button class="btn gray small" onclick="rowMove('${r.uid}',1)">↓</button> <button class="btn warn small" onclick="rowDel('${r.uid}')">删</button></td></tr>`;
+    });
+    h+='</tbody></table></div>';
+  } else {
+    h=items.map((r,i)=>{
+      const total=r.price==null?null:Math.round(r.price*r.qty*100)/100;
+      return `<div class="mitem">
+        <div class="m-name"><span>${i+1}. ${esc(r.name)}${r.kind==='option'?' <span class="mini">（选配）</span>':''}</span><b class="${r.price==null?'price pending':'price'}">${total==null?'待定':total+' 万'}</b></div>
+        <div class="m-sub">${esc(r.mainParams)}｜${esc(r.funcDesc||'').slice(0,30)}</div>
+        <div class="m-row">数量 <span class="qtybox"><button onclick="mRowQty('${r.uid}',-1)">−</button><span>${r.qty}</span><button onclick="mRowQty('${r.uid}',1)">＋</button></span>${esc(r.unit)}　单价 <input type="number" min="0" step="0.1" placeholder="待定" style="width:88px" value="${r.price==null?'':r.price}" onchange="rowSet('${r.uid}','price',this.value)"> 万</div>
+        <div class="m-ctrl"><button class="btn gray small" onclick="rowMove('${r.uid}',-1)">↑ 上移</button><button class="btn gray small" onclick="rowMove('${r.uid}',1)">↓ 下移</button><button class="btn warn small" onclick="rowDel('${r.uid}')">删除</button></div>
+      </div>`;}).join('');
+  }
+  $('#cartItems').innerHTML=h;
+  /* 连线预览 */
+  const prods=items.filter(r=>r.kind!=='option');
+  $('#flowStrip').innerHTML=prods.length?prods.map((r,i)=>`<span class="fs-item">${i+1}. ${esc(r.name)}</span>${i<prods.length-1?'<span class="fs-arrow">→</span>':''}`).join(''):'<span class="kv">—</span>';
+  /* 服务快捷 */
+  const present=new Set(items.map(r=>r.pid));
+  $('#svcQuick').innerHTML=svcProducts().map(s=>present.has(s.id)
+    ?`<button class="btn gray small" disabled>✓ ${esc(s.name)}（已在清单）</button>`
+    :`<button class="btn ghost small" onclick="quickSvc('${s.id}')">＋ ${esc(s.name)}${s.price!=null&&s.price>0?'（'+s.price+'万）':''}</button>`).join(' ');
+  /* 合计 */
+  const known=cartKnown(items),pending=cartHasPending(items);
+  $('#cartTotal').innerHTML=`合计（已定价部分）：<b>${Math.round(known*100)/100} 万</b>${pending?'<span class="tag-warn">（尚有待定价项）</span>':''}`;
+}
+function mRowQty(u,d){const r=db.cart.items.find(x=>x.uid===u);if(!r)return;r.qty=Math.max(1,(r.qty||1)+d);save();renderCart();}
+function rowSet(u,k,v){const r=db.cart.items.find(x=>x.uid===u);if(!r)return;
+  if(k==='price'){r.price=(v===''||v==null)?null:Math.max(0,parseFloat(v)||0);}
+  if(k==='qty'){r.qty=Math.max(1,parseInt(v)||1);}
+  save();renderCart();}
+function rowMove(u,d){const i=db.cart.items.findIndex(x=>x.uid===u);const j=i+d;if(i<0||j<0||j>=db.cart.items.length)return;
+  const a=db.cart.items;a.splice(j,0,a.splice(i,1)[0]);save();renderCart();}
+function rowDel(u){db.cart.items=db.cart.items.filter(x=>x.uid!==u);save();renderCart();updateBadges();}
+function quickSvc(pid){const s=prodById(pid);if(!s)return;db.cart.items.push({uid:uid(),pid:s.id,kind:'service',name:s.name,mainParams:s.mainParams||'无',qty:1,unit:s.unit||'次',price:s.price,funcDesc:s.funcDesc||'',brand:s.brand||db.company.brand});save();renderCart();updateBadges();toast('已加入：'+s.name);}
+function clearCart(){if(!db.cart.items.length||!confirm('确定清空当前方案清单？'))return;db.cart.items=[];save();renderCart();updateBadges();}
+$('#inpCustomer').onchange=e=>{db.cart.customer=e.target.value.trim();save();};
+$('#inpProject').onchange=e=>{db.cart.project=e.target.value.trim();save();};
+
+/* ---------- 保存记录 + Excel ---------- */
+function rowTotal(r){return r.price==null?null:Math.round(r.price*r.qty*100)/100;}
+function saveRecord(){
+  const items=db.cart.items;
+  if(!items.length){toast('清单为空，无法保存');return;}
+  const rec={id:idStr(),time:nowStr(),customer:db.cart.customer,project:db.cart.project,
+    items:JSON.parse(JSON.stringify(items)),totalKnown:cartKnown(items),hasPending:cartHasPending(items)};
+  db.history.unshift(rec);save();
+  downloadRecordExcel(rec);
+  updateBadges();renderCart();
+  toast('已保存记录 '+rec.id+' 并导出 Excel');
+}
+
+/* =====================================================================
+   Excel(.xlsx) 生成器 —— 纯前端、无依赖（ZIP store 方式）
+   ===================================================================== */
+const XLSXGEN=(function(){
+  let T=null;
+  function crc32(u8){
+    if(!T){T=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);T[n]=c>>>0;}}
+    let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=T[(c^u8[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;
+  }
+  const enc=s=>new TextEncoder().encode(s);
+  function zip(entries){
+    const d=new Date();const dt=((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()/2))&0xFFFF;
+    const dd=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xFFFF;
+    const parts=[],central=[];let off=0;
+    entries.forEach(e=>{
+      const nb=enc(e.name),crc=crc32(e.u8);
+      const lh=new Uint8Array(30+nb.length),dv=new DataView(lh.buffer);
+      dv.setUint32(0,0x04034b50,true);dv.setUint16(4,20,true);dv.setUint16(8,0,true);
+      dv.setUint16(10,dt,true);dv.setUint16(12,dd,true);dv.setUint32(14,crc,true);
+      dv.setUint32(18,e.u8.length,true);dv.setUint32(22,e.u8.length,true);
+      dv.setUint16(26,nb.length,true);lh.set(nb,30);
+      parts.push(lh,e.u8);
+      const ch=new Uint8Array(46+nb.length),cv=new DataView(ch.buffer);
+      cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);
+      cv.setUint16(12,dt,true);cv.setUint16(14,dd,true);cv.setUint32(16,crc,true);
+      cv.setUint32(20,e.u8.length,true);cv.setUint32(24,e.u8.length,true);
+      cv.setUint16(28,nb.length,true);cv.setUint32(42,off,true);ch.set(nb,46);
+      central.push(ch);off+=lh.length+e.u8.length;
+    });
+    const cdSize=central.reduce((a,c)=>a+c.length,0);
+    const eo=new Uint8Array(22),ev=new DataView(eo.buffer);
+    ev.setUint32(0,0x06054b50,true);ev.setUint16(8,entries.length,true);ev.setUint16(10,entries.length,true);
+    ev.setUint32(12,cdSize,true);ev.setUint32(16,off,true);
+    const all=[...parts,...central,eo];const len=all.reduce((a,x)=>a+x.length,0);
+    const out=new Uint8Array(len);let p=0;all.forEach(x=>{out.set(x,p);p+=x.length;});return out;
+  }
+  const xe=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function colLetter(i){let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=(i-m-1)/26;}return s;}
+  function cell(ref,val,style){ // val: {t:'s'|'n', v}
+    if(val==null)return '';
+    if(val.t==='n'){return `<c r="${ref}" s="${style||0}"><v>${val.v}</v></c>`;}
+    return `<c r="${ref}" s="${style||0}" t="inlineStr"><is><t xml:space="preserve">${xe(val.v)}</t></is></c>`;
+  }
+  function sheetXml(rows,widths){
+    let cols='';
+    if(widths&&widths.length){cols='<cols>'+widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')+'</cols>';}
+    let sd='';
+    rows.forEach((row,ri)=>{
+      let cs='';
+      row.forEach((cv,ci)=>{
+        if(cv==null)return;
+        cs+=cell(colLetter(ci)+(ri+1),cv,cv.s);
+      });
+      sd+=`<row r="${ri+1}">${cs}</row>`;
+    });
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${cols}<sheetData>${sd}</sheetData></worksheet>`;
+  }
+  const STYLES=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<fonts count="2"><font><sz val="11"/><name val="微软雅黑"/></font><font><b/><sz val="11"/><name val="微软雅黑"/></font></fonts>
+<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
+<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>
+<border><left style="thin"><color indexed="64"/></left><right style="thin"><color indexed="64"/></right><top style="thin"><color indexed="64"/></top><bottom style="thin"><color indexed="64"/></bottom><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="4">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1"/>
+</cellXfs>
+<cellStyles count="1"><cellStyle name="普通" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+  function make(sheets){ // sheets: [{name, rows, widths}] rows: [[ {t,v} | null ]]
+    const entries=[];
+    const n=sheets.length;
+    let wbSheets='',wbRels='',ctOverrides='';
+    sheets.forEach((sh,i)=>{
+      const n1=i+1;
+      wbSheets+=`<sheet name="${xe(sh.name)}" sheetId="${n1}" r:id="rId${n1}"/>`;
+      wbRels+=`<Relationship Id="rId${n1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${n1}.xml"/>`;
+      ctOverrides+=`<Override PartName="/xl/worksheets/sheet${n1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;
+      entries.push({name:`xl/worksheets/sheet${n1}.xml`,u8:enc(sheetXml(sh.rows,sh.widths))});
+    });
+    entries.push({name:'[Content_Types].xml',u8:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${ctOverrides}</Types>`)});
+    entries.push({name:'_rels/.rels',u8:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`)});
+    entries.push({name:'xl/workbook.xml',u8:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${wbSheets}</sheets></workbook>`)});
+    entries.push({name:'xl/_rels/workbook.xml.rels',u8:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${wbRels}<Relationship Id="rId${n+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`)});
+    entries.push({name:'xl/styles.xml',u8:enc(STYLES)});
+    return zip(entries);
+  }
+  const S={n:v=>({t:'n',v:v}),s:v=>({t:'s',v:String(v)})};
+  return {make,S};
+})();
+
+/* ---------- 记录 Excel ---------- */
+function recordSheet(rec){
+  const S=XLSXGEN.S,B=3,BO=2; // 3=bold+border, 2=border
+  const rows=[];
+  rows.push([S.s('内部选购记录表　'+rec.id)]);
+  rows.push([S.s('记录编号'),S.s(rec.id),S.s('时间'),S.s(rec.time)]);
+  rows.push([S.s('需方'),S.s(rec.customer||'—'),S.s('方案名称'),S.s(rec.project||'—')]);
+  rows.push([S.s('单位：万元（含税）')]);
+  rows.push([]);
+  rows.push(['序号','设备型号/名称','主要参数','数量','单位','单价(万元)','总价(万元)','功能特点简述','品牌'].map(v=>({...S.s(v),s:B})));
+  rec.items.forEach((r,i)=>{
+    const t=rowTotal(r);
+    rows.push([S.n(i+1),S.s(r.name),S.s(r.mainParams||'无'),S.n(r.qty),S.s(r.unit),
+      r.price==null?S.s('待定'):S.n(r.price),t==null?S.s('待定'):S.n(t),S.s(r.funcDesc||''),S.s(r.brand||'')]);
+  });
+  rows.push([S.s(''),S.s('合计'),S.s(''),S.s(''),S.s(''),S.s(''),rec.totalKnown?S.n(Math.round(rec.totalKnown*100)/100):S.n(0),S.s(rec.hasPending?'（含待定项）':''),S.s('')]);
+  rows.push([]);
+  rows.push([S.s('备注：本表为内部选购记录；单价为万元含税价；导出自「设备选购系统」。')]);
+  return {name:'报价明细',rows:rows,widths:[5,26,14,6,6,10,10,40,7]};
+}
+function downloadRecordExcel(rec){download(`选购记录_${rec.id}.xlsx`,XLSXGEN.make([recordSheet(rec)]),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');}
+
+/* ---------- 全部历史 Excel ---------- */
+function exportHistoryExcel(){
+  if(!db.history.length){toast('暂无历史记录');return;}
+  const S=XLSXGEN.S;
+  const sum=[[S.s('记录编号'),S.s('时间'),S.s('需方'),S.s('方案名称'),S.s('行项数'),S.s('合计(万元)'),S.s('待定项')].map(v=>({...v,s:3}))];
+  db.history.forEach(r=>sum.push([S.s(r.id),S.s(r.time),S.s(r.customer||'—'),S.s(r.project||'—'),S.n(r.items.length),S.n(Math.round((r.totalKnown||0)*100)/100),S.s(r.hasPending?'有':'无')]));
+  const det=[[S.s('记录编号'),S.s('序号'),S.s('设备型号/名称'),S.s('主要参数'),S.s('数量'),S.s('单位'),S.s('单价(万元)'),S.s('总价(万元)'),S.s('品牌')].map(v=>({...v,s:3}))];
+  db.history.forEach(r=>r.items.forEach((it,i)=>{
+    const t=rowTotal(it);
+    det.push([S.s(r.id),S.n(i+1),S.s(it.name),S.s(it.mainParams||'无'),S.n(it.qty),S.s(it.unit),it.price==null?S.s('待定'):S.n(it.price),t==null?S.s('待定'):S.n(t),S.s(it.brand||'')]);
+  }));
+  download('历史记录汇总_'+nowStr().replace(/[-: ]/g,'')+'.xlsx',XLSXGEN.make([
+    {name:'汇总',rows:sum,widths:[19,18,26,24,8,12,8]},
+    {name:'全部明细',rows:det,widths:[19,6,26,14,6,6,11,11,8]}
+  ]),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('已导出全部历史 Excel');
+}
+
+/* =====================================================================
+   报价方案（Word .doc）生成 —— 仿参考报价单版式
+   ===================================================================== */
+function quoteHTML(rec){
+  const c=db.company;
+  const prods=rec.items.filter(r=>r.kind!=='option');
+  const optRows=rec.items.filter(r=>r.kind==='option');
+  const taxNote=`以上价格含税（${c.taxRate}%专用增值税发票），报价有效期至 ${addDays(c.validityDays)}。`;
+  let h=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+<style>
+body{font-family:微软雅黑;font-size:10.5pt;line-height:150%;margin:24pt 28pt 36pt 28pt;}
+h1{font-size:18pt;text-align:center;font-family:微软雅黑;font-weight:bold;margin:0 0 6pt 0;}
+h2{font-size:12pt;font-family:微软雅黑;font-weight:bold;margin:14pt 0 6pt 0;}
+h3{font-size:10.5pt;font-family:微软雅黑;font-weight:bold;margin:10pt 0 4pt 0;}
+p{margin:0 0 6pt 0;text-align:justify;}
+table{border-collapse:collapse;width:100%;margin:4pt 0 8pt 0;}
+td,th{border:solid windowtext 1px;padding:4pt 6pt;font-size:9.5pt;vertical-align:middle;font-family:微软雅黑;}
+th{background:#DCE9F7;text-align:center;font-weight:bold;}
+.cover{text-align:center;}
+.cover .meta{margin-top:8pt;text-align:center;font-size:11pt;line-height:200%;}
+.pagenext{page-break-before:always;}
+</style></head><body>`;
+  /* 封面 */
+  const title=(rec.project&&rec.project.trim())?rec.project.trim():(prods[0]?prods[0].name+' 报价方案':'设备报价方案');
+  h+=`<div class="cover" style="margin-top:60pt">
+  <p style="font-size:26pt;font-weight:bold;text-align:center;font-family:微软雅黑">${esc(title)}<br><span style="font-size:22pt">报价方案</span></p>
+  <p class="meta">需　方：${esc(rec.customer||'________________')}<br>供　方：${esc(c.supplier)}<br>时　间：${esc(rec.time?rec.time.split(' ')[0]:nowStr().split(' ')[0])}</p></div>`;
+  /* 一、公司简介 */
+  h+=`<div class="pagenext"><h1 style="font-size:14pt">${esc(c.supplier)}</h1><h2>一、公司简介</h2>`+c.intro.split('\n').map(t=>`<p>${esc(t)}</p>`).join('')+`</div>`;
+  /* 二、设备简介 */
+  h+=`<div class="pagenext"><h2>二、设备简介</h2>`;
+  const seen={};
+  prods.forEach((r,i)=>{
+    const p=prodById(r.pid);
+    const zh='（'+'一二三四五六七八九十'.charAt(i%10)+'）';
+    h+=`<h3>${zh}${esc(r.name)}</h3>`;
+    if(p&&p.desc){h+=`<p>${esc(p.desc)}</p>`;}
+    if(p&&p.features.length){h+=`<p><b>1. 技术特点</b></p>`+p.features.map((f,k)=>`<p style="margin-left:12pt">1.${k+1}${esc(f)}</p>`).join('');}
+    if(p&&p.params.length){
+      h+=`<p><b>${p.features.length?'2':'1'}. 技术参数</b></p><table><tbody>`+p.params.map(kv=>`<tr><td style="width:32%"><b>${esc(kv[0])}</b></td><td>${esc(kv[1])}</td></tr>`).join('')+`</tbody></table>`;
+    }
+    const opts=rec.items.filter(x=>x.kind==='option'&&x.pid===r.pid);
+    if(opts.length){h+=`<p><b>${(p&&p.params.length?'3':'2')}. 本方案选配装置</b></p><table><tbody><tr><th style="width:32%">选配名称</th><th>说明</th></tr>`+opts.map(o=>`<tr><td>${esc(o.name)}</td><td>${esc(o.funcDesc||'')}</td></tr>`).join('')+`</tbody></table>`;}
+  });
+  h+=`</div>`;
+  /* 三、报价表 */
+  const known=cartKnown(rec.items);
+  h+=`<div class="pagenext"><h2>三、生产线报价方案（单位：万元）</h2><table>
+  <thead><tr><th style="width:5%">序号</th><th style="width:16%">设备型号/名称</th><th style="width:12%">主要参数</th><th style="width:6%">数量</th><th style="width:6%">单位</th><th style="width:7%">单价</th><th style="width:7%">总价</th><th>功能特点简述</th><th style="width:7%">品牌</th></tr></thead><tbody>`;
+  rec.items.forEach((r,i)=>{
+    const t=rowTotal(r);
+    h+=`<tr><td style="text-align:center">${i+1}</td><td>${esc(r.name)}</td><td style="text-align:center">${esc(r.mainParams||'无')}</td><td style="text-align:center">${r.qty}</td><td style="text-align:center">${esc(r.unit)}</td><td style="text-align:center">${r.price==null?'待定':fmtW(r.price)}</td><td style="text-align:center">${t==null?'待定':fmtW(t)}</td><td>${esc(r.funcDesc||'')}</td><td style="text-align:center">${esc(r.brand||'')}</td></tr>`;
+  });
+  h+=`<tr><td colspan="6" style="text-align:center"><b>合　计</b></td><td style="text-align:center"><b>${fmtW(Math.round(known*100)/100)}</b>${rec.hasPending?'<br><span style="color:#C0392B">含待定项</span>':''}</td><td colspan="2"></td></tr></tbody></table>`;
+  h+=`<p><b>备注：</b>${esc(taxNote)}</p></div>`;
+  /* 四、售后 */
+  h+=`<div class="pagenext"><h2>四、售后服务政策</h2>`+c.afterSales.split('\n').map(t=>`<p>${esc(t)}</p>`).join('')+`</div>`;
+  h+=`</body></html>`;
+  return h;
+}
+function quoteDocName(rec){
+  const cust=(rec.customer||'').replace(/[\\\/:*?"<>|]/g,'');
+  return '报价方案_'+(cust||rec.id)+'.doc';
+}
+function downloadQuoteDoc(rec){download(quoteDocName(rec),new Blob(['\ufeff'+quoteHTML(rec)],{type:'application/msword'}));toast('已生成报价方案 Word 文档');}
+function quoteFromCart(){
+  if(!db.cart.items.length){toast('清单为空，无法生成报价');return;}
+  const rec={id:idStr(),time:nowStr(),customer:db.cart.customer,project:db.cart.project,
+    items:db.cart.items,totalKnown:cartKnown(db.cart.items),hasPending:cartHasPending(db.cart.items)};
+  downloadQuoteDoc(rec);
+}
+function printQuoteCart(){
+  if(!db.cart.items.length){toast('清单为空');return;}
+  const rec={id:idStr(),time:nowStr(),customer:db.cart.customer,project:db.cart.project,
+    items:db.cart.items,totalKnown:cartKnown(db.cart.items),hasPending:cartHasPending(db.cart.items)};
+  printQuote(rec);
+}
+function printQuote(rec){
+  const w=window.open('','_blank');
+  if(!w){toast('浏览器拦截了弹窗，请允许弹窗后重试');return;}
+  const html=quoteHTML(rec).replace('</head>','<style>body{background:#fff;margin:0} @media print{.pagenext{page-break-before:always}}</style></head>');
+  w.document.write(html);w.document.close();
+}
+
+/* ---------- 历史页 ---------- */
+function renderHistory(){
+  const list=db.history;
+  $('#histCnt').textContent=list.length?`${list.length} 条`:'空';
+  $('#histEmpty').style.display=list.length?'none':'block';
+  $('#histList').innerHTML=list.map((r,idx)=>{
+    const known=Math.round((r.totalKnown||0)*100)/100;
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline">
+        <div><b>${esc(r.id)}</b> <span class="kv" style="display:inline">｜${esc(r.time)}｜需方：${esc(r.customer||'—')}</span></div>
+        <div class="price" style="font-size:16px">${known} 万${r.hasPending?' <span class="tag-warn">含待定</span>':''}</div>
+      </div>
+      <div class="kv" style="margin:6px 0">${esc(r.project||'未命名方案')}｜${r.items.length} 行项｜${esc(r.items.map(i=>i.name).slice(0,3).join(' → '))}${r.items.length>3?' → …':''}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ghost small" onclick="openRecord(${idx})">查看</button>
+        <button class="btn ghost small" onclick="reExcel(${idx})">📊 Excel</button>
+        <button class="btn ghost small" onclick="reQuote(${idx})">📄 报价方案</button>
+        <button class="btn warn small" onclick="delRecord(${idx})">删除</button>
+      </div></div>`;}).join('');
+}
+function openRecord(idx){
+  const r=db.history[idx];if(!r)return;
+  $('#mrTitle').textContent='记录 '+r.id;
+  $('#mrBody').innerHTML=`<div class="kv">时间：${esc(r.time)}｜需方：${esc(r.customer||'—')}｜方案：${esc(r.project||'—')}</div>
+  <table class="tbl"><thead><tr><th>序号</th><th>名称</th><th>主要参数</th><th>数量</th><th>单位</th><th>单价(万)</th><th>总价(万)</th><th>品牌</th></tr></thead><tbody>
+  ${r.items.map((it,i)=>`<tr><td class="num">${i+1}</td><td><b>${esc(it.name)}</b>${it.kind==='option'?'<div class="mini">（选配）</div>':''}</td><td class="mini">${esc(it.mainParams||'无')}</td><td class="num">${it.qty}</td><td class="num">${esc(it.unit)}</td><td class="num">${it.price==null?'待定':it.price}</td><td class="num"><b>${rowTotal(it)==null?'待定':rowTotal(it)}</b></td><td class="num">${esc(it.brand||'')}</td></tr>`).join('')}
+  </tbody></table>
+  <div class="totalbar">合计：<b>${Math.round((r.totalKnown||0)*100)/100} 万</b>${r.hasPending?'<span class="tag-warn">（含待定项）</span>':''}</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn small" onclick="reExcel(${idx})">📊 导出 Excel</button>
+    <button class="btn ghost small" onclick="reQuote(${idx})">📄 生成报价方案</button>
+    <button class="btn gray small" onclick="printQuote(db.history[${idx}])">🖨️ 打印预览</button>
+  </div>`;
+  $('#modalRecord').classList.add('show');
+}
+function reExcel(idx){const r=db.history[idx];if(r)downloadRecordExcel(r);}
+function reQuote(idx){const r=db.history[idx];if(r)downloadQuoteDoc(r);}
+function delRecord(idx){const r=db.history[idx];if(!r)return;if(!confirm('删除记录 '+r.id+'？此操作不可恢复。'))return;db.history.splice(idx,1);save();renderHistory();updateBadges();toast('已删除');}
+function clearHistory(){if(!db.history.length){toast('历史已为空');return;}if(!confirm('确定清空全部 '+db.history.length+' 条历史记录？'))return;db.history=[];save();renderHistory();updateBadges();toast('已清空历史');}
+
+/* ---------- 维护页 ---------- */
+function renderAdmin(){
+  const c=db.company;
+  $('#acSupplier').value=c.supplier;$('#acBrand').value=c.brand;$('#acTax').value=c.taxRate;$('#acValid').value=c.validityDays;
+  $('#acIntro').value=c.intro;$('#acAfter').value=c.afterSales;
+  renderProdAdmin();
+}
+function saveCompany(){
+  const c=db.company;
+  c.supplier=$('#acSupplier').value.trim()||c.supplier;c.brand=$('#acBrand').value.trim()||c.brand;
+  c.taxRate=parseFloat($('#acTax').value)||13;c.validityDays=parseInt($('#acValid').value)||30;
+  c.intro=$('#acIntro').value;c.afterSales=$('#acAfter').value;
+  save();toast('公司信息已保存');
+}
+let expandedProd=null;
+function renderProdAdmin(){
+  const el=$('#prodAdminList');
+  if(!db.products.length){el.innerHTML='<div class="empty">暂无产品</div>';return;}
+  el.innerHTML=db.products.map((p,i)=>`
+  <div class="prodrow">
+    <div class="pr-head">
+      <b>${esc(p.name)}</b>
+      <span class="kv" style="display:inline">${esc(p.category)}｜${p.price==null?'<span class="tag-warn">待定</span>':p.price+' 万'}｜选配×${p.options.length}</span>
+      <span style="display:flex;gap:6px">
+        <button class="btn gray small" onclick="toggleProd('${p.id}')">${expandedProd===p.id?'收起':'编辑'}</button>
+        <button class="btn warn small" onclick="delProduct('${p.id}')">删除</button>
+      </span>
+    </div>
+    ${expandedProd===p.id?prodForm(p):''}
+  </div>`).join('');
+}
+function prodForm(p){
+  return `<hr class="hr" style="margin:8px 0">
+  <div class="fgrid">
+    <div><label>产品名称</label><input id="pe_name" value="${esc(p.name)}" style="width:100%"></div>
+    <div><label>型号</label><input id="pe_model" value="${esc(p.model||'')}" style="width:100%"></div>
+    <div><label>类别</label><input id="pe_cat" list="catList" value="${esc(p.category)}" style="width:100%"><datalist id="catList">${cats().filter(c=>c!=='全部').map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>
+    <div><label>单位</label><input id="pe_unit" value="${esc(p.unit||'台')}" style="width:100%"></div>
+    <div><label>单价（万元，留空=待定）</label><input id="pe_price" type="number" min="0" step="0.1" value="${p.price==null?'':p.price}" style="width:100%"></div>
+    <div><label>品牌</label><input id="pe_brand" value="${esc(p.brand||db.company.brand)}" style="width:100%"></div>
+    <div><label>主要参数（报价表列）</label><input id="pe_mp" value="${esc(p.mainParams||'')}" style="width:100%"></div>
+    <div><label>功能特点简述（报价表列）</label><input id="pe_fd" value="${esc(p.funcDesc||'')}" style="width:100%"></div>
+  </div>
+  <label>产品介绍</label><textarea id="pe_desc">${esc(p.desc||'')}</textarea>
+  <div class="subttl">技术特点（逐条）</div><div id="pe_feats">${(p.features||[]).map((f,k)=>`<div class="arrrow"><input type="text" value="${esc(f)}" data-k="${k}" style="width:100%"></div>`).join('')}</div>
+  <button class="btn gray small" onclick="featAdd()">＋ 加一条</button>
+  <div class="subttl">技术参数（键 / 值）</div><div id="pe_params">${(p.params||[]).map((kv,k)=>`<div class="arrrow"><input type="text" class="k" placeholder="项目" value="${esc(kv[0])}" data-k="${k}"><input type="text" placeholder="参数说明" value="${esc(kv[1])}" data-k="${k}"></div>`).join('')}</div>
+  <button class="btn gray small" onclick="paramAdd()">＋ 加一行</button>
+  <div class="subttl">可选配置（名称 / 价格万元 / 说明）</div><div id="pe_opts">${(p.options||[]).map((o,k)=>`<div class="arrrow"><input type="text" placeholder="名称" value="${esc(o.name)}" data-k="${k}" style="flex:1"><input type="number" placeholder="万" min="0" step="0.1" value="${o.price==null?'':o.price}" data-k="${k}" style="width:80px"><input type="text" placeholder="说明（可空）" value="${esc(o.desc||'')}" data-k="${k}" style="flex:1.4"></div>`).join('')}</div>
+  <button class="btn gray small" onclick="optAdd()">＋ 加一项</button>
+  <hr class="hr"><button class="btn" onclick="saveProduct('${p.id}')">保存修改</button>`;
+}
+function toggleProd(id){expandedProd=(expandedProd===id)?null:id;renderProdAdmin();}
+function featAdd(){$('#pe_feats').insertAdjacentHTML('beforeend',`<div class="arrrow"><input type="text" value="" style="width:100%"></div>`);}
+function paramAdd(){$('#pe_params').insertAdjacentHTML('beforeend',`<div class="arrrow"><input type="text" class="k" placeholder="项目"><input type="text" placeholder="参数说明"></div>`);}
+function optAdd(){$('#pe_opts').insertAdjacentHTML('beforeend',`<div class="arrrow"><input type="text" placeholder="名称" style="flex:1"><input type="number" placeholder="万" min="0" step="0.1" style="width:80px"><input type="text" placeholder="说明（可空）" style="flex:1.4"></div>`);}
+function saveProduct(id){
+  const p=prodById(id);if(!p)return;
+  p.name=$('#pe_name').value.trim()||p.name;p.model=$('#pe_model').value.trim();
+  p.category=$('#pe_cat').value.trim()||'未分类';p.unit=$('#pe_unit').value.trim()||'台';
+  p.brand=$('#pe_brand').value.trim();p.mainParams=$('#pe_mp').value.trim();p.funcDesc=$('#pe_fd').value.trim();
+  const pv=$('#pe_price').value;p.price=(pv===''||pv==null)?null:Math.max(0,parseFloat(pv));
+  p.desc=$('#pe_desc').value;
+  p.features=$$('#pe_feats input').map(i=>i.value.trim()).filter(Boolean);
+  p.params=$$('#pe_params .arrrow').map(row=>{
+    const ins=row.querySelectorAll('input');
+    return [ins[0]?ins[0].value.trim():'',ins[1]?ins[1].value.trim():''];
+  }).filter(a=>a[0]);
+  const opts=[];$$('#pe_opts .arrrow').forEach(row=>{
+    const ins=row.querySelectorAll('input');if(!ins.length)return;
+    const name=ins[0].value.trim();if(!name)return;
+    const price=(ins[1].value==='')?null:Math.max(0,parseFloat(ins[1].value)||0);
+    opts.push({id:uid(),name:name,price:price,desc:ins[2]?ins[2].value.trim():''});
+  });
+  p.options=opts;
+  save();renderProdAdmin();renderGrid();toast('已保存：'+p.name);
+}
+function addProduct(){
+  const np={id:'p'+uid(),name:'新产品（请改名）',model:'',category:'未分类',price:null,mainParams:'',funcDesc:'',desc:'',features:[],params:[],options:[],brand:db.company.brand,unit:'台'};
+  db.products.unshift(np);expandedProd=np.id;save();renderProdAdmin();renderGrid();renderChips();toast('已新增产品，请编辑');
+}
+function delProduct(id){
+  const p=prodById(id);if(!p)return;
+  if(!confirm('删除产品「'+p.name+'」？'))return;
+  db.products=db.products.filter(x=>x.id!==id);save();renderProdAdmin();renderGrid();renderChips();toast('已删除');
+}
+function exportConfig(){
+  const data={version:1,company:db.company,products:db.products};
+  download('设备选购系统配置_'+nowStr().replace(/[-: ]/g,'')+'.json',new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  toast('配置已导出');
+}
+function importConfig(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const o=JSON.parse(rd.result);
+      if(!o.products||!Array.isArray(o.products))throw 0;
+      if(o.company)db.company=Object.assign(db.company,o.company);
+      db.products=o.products;expandedProd=null;
+      save();renderAdmin();renderGrid();renderChips();toast('导入成功：'+o.products.length+' 个产品');
+    }catch(e){toast('导入失败：文件格式不正确');}
+    input.value='';
+  };
+  rd.readAsText(f);
+}
+function resetConfig(){
+  if(!confirm('恢复默认产品数据将覆盖当前产品与公司信息（历史记录保留），确定？'))return;
+  const fresh=freshDB();
+  db.company=fresh.company;db.products=fresh.products;
+  save();expandedProd=null;renderAdmin();renderGrid();renderChips();toast('已恢复默认数据');
+}
+
+/* ---------- 徽标 ---------- */
+function updateBadges(){
+  const n=db.cart.items.length;
+  $('#tabBadge').textContent=n;$('#tabBadge').style.display=n?'':'none';
+  $('#navBadge').textContent=n;$('#navBadge').style.display=n?'':'none';
+}
+
+/* ---------- 启动 ---------- */
+renderChips();renderGrid();updateBadges();
+window.addEventListener('resize',()=>{if($('#page-cart').classList.contains('active'))renderCart();});
+</script>
+</body>
+</html>
